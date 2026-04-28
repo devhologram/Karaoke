@@ -7,6 +7,8 @@ export function useSpeechRecognition() {
   const [speechEvent, setSpeechEvent] = useState('Initialized'); // Debug state
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
+  const offsetIndexRef = useRef(0);
+  const resultsLengthRef = useRef(0);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -28,10 +30,14 @@ export function useSpeechRecognition() {
     recognition.onnomatch = () => setSpeechEvent('No match found');
 
     recognition.onresult = (event) => {
+      resultsLengthRef.current = event.results.length;
       let currentTranscript = '';
-      for (let i = 0; i < event.results.length; i++) {
+      
+      const startIdx = Math.min(offsetIndexRef.current, event.results.length);
+      for (let i = startIdx; i < event.results.length; i++) {
         currentTranscript += event.results[i][0].transcript + ' ';
       }
+      
       const cleanTranscript = currentTranscript.trim().toLowerCase();
       setTranscript(cleanTranscript);
       setSpeechEvent(`Heard: ${cleanTranscript.substring(0, 20)}...`);
@@ -70,6 +76,8 @@ export function useSpeechRecognition() {
   const startListening = () => {
     setIsListening(true);
     isListeningRef.current = true;
+    offsetIndexRef.current = 0;
+    resultsLengthRef.current = 0;
     setTranscript('');
     try {
       recognitionRef.current?.start();
@@ -89,6 +97,7 @@ export function useSpeechRecognition() {
   };
 
   const resetTranscript = () => {
+    offsetIndexRef.current = resultsLengthRef.current;
     setTranscript('');
   };
 
