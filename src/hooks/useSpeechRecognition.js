@@ -4,11 +4,13 @@ export function useSpeechRecognition() {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState(null);
+  const [speechEvent, setSpeechEvent] = useState('Initialized'); // Debug state
   const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setSpeechError('not-supported');
+      setSpeechEvent('Not Supported');
       return;
     }
     
@@ -18,7 +20,14 @@ export function useSpeechRecognition() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
+    // Diagnostic Events
+    recognition.onaudiostart = () => setSpeechEvent('Audio capturing started');
+    recognition.onsoundstart = () => setSpeechEvent('Sound detected');
+    recognition.onspeechstart = () => setSpeechEvent('Speech detected');
+    recognition.onnomatch = () => setSpeechEvent('No match found');
+
     recognition.onresult = (event) => {
+      setSpeechEvent('Result received!');
       let currentTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         currentTranscript += event.results[i][0].transcript;
@@ -29,16 +38,20 @@ export function useSpeechRecognition() {
     recognition.onerror = (event) => {
       console.error("Speech recognition error", event.error);
       setSpeechError(event.error);
+      setSpeechEvent(`Error: ${event.error}`);
       setIsListening(false);
     };
 
     recognition.onend = () => {
+      setSpeechEvent('Engine stopped');
       // Auto restart if it stops unexpectedly
       if (isListening && recognitionRef.current) {
         try {
+          setSpeechEvent('Restarting engine...');
           recognitionRef.current.start();
         } catch (e) {
           console.error("Failed to restart", e);
+          setSpeechEvent(`Restart failed: ${e.message}`);
         }
       }
     };
@@ -75,5 +88,5 @@ export function useSpeechRecognition() {
     setTranscript('');
   };
 
-  return { transcript, isListening, startListening, stopListening, resetTranscript, speechError };
+  return { transcript, isListening, startListening, stopListening, resetTranscript, speechError, speechEvent };
 }
