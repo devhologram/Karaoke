@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     try {
       // ioredis zrange with REV and WITHSCORES returns a flat array:
       // ["member1", "score1", "member2", "score2"]
-      const results = await redis.zrange('leaderboard:global', 0, 9, 'REV', 'WITHSCORES');
+      const results = await redis.zrange('leaderboard:global', 0, 4, 'REV', 'WITHSCORES');
       
       let leaderboard = [];
       
