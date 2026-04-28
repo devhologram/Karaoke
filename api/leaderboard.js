@@ -1,12 +1,19 @@
 import { Redis } from '@upstash/redis';
 
 // Support both the old Vercel KV and new Upstash Redis environment variables
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
-});
+const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+let redis;
+if (url && token) {
+  redis = new Redis({ url, token });
+}
 
 export default async function handler(req, res) {
+  if (!redis) {
+    return res.status(500).json({ error: 'Database environment variables (KV_REST_API_URL or UPSTASH_REDIS_REST_URL) are completely missing in Vercel. Please link the database in Vercel and redeploy!' });
+  }
+
   if (req.method === 'POST') {
     try {
       const { score, mood } = req.body;
