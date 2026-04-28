@@ -28,12 +28,13 @@ export function useSpeechRecognition() {
     recognition.onnomatch = () => setSpeechEvent('No match found');
 
     recognition.onresult = (event) => {
-      setSpeechEvent('Result received!');
       let currentTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
+      for (let i = 0; i < event.results.length; i++) {
+        currentTranscript += event.results[i][0].transcript + ' ';
       }
-      setTranscript(currentTranscript.trim().toLowerCase());
+      const cleanTranscript = currentTranscript.trim().toLowerCase();
+      setTranscript(cleanTranscript);
+      setSpeechEvent(`Heard: ${cleanTranscript.substring(0, 20)}...`);
     };
 
     recognition.onerror = (event) => {
