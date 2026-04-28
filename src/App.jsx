@@ -11,8 +11,57 @@ const getEligibleWords = (text) => {
   return matches ? Array.from(new Set(matches)) : [];
 };
 
+function LeaderboardView({ onFinish, currentScore, currentMood }) {
+  const [scores, setScores] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/leaderboard')
+      .then(r => r.json())
+      .then(data => {
+        setScores(data || []);
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error(e);
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="app-container center-content">
+      <div className="glass-panel leaderboard-panel">
+        <h2 className="mood-title" style={{marginBottom: '1rem'}}>Global Leaderboard</h2>
+        <div className="current-run">
+          <p>You scored <strong style={{color: 'var(--success)'}}>{currentScore}</strong> on <em>{currentMood}</em>!</p>
+        </div>
+        
+        {loading ? (
+          <p className="loading-text">Loading top scores...</p>
+        ) : (
+          <div className="leaderboard-table">
+             {scores.length === 0 ? <p>No scores yet. You are the first!</p> : null}
+             {scores.map((s, i) => (
+                <div key={i} className="leaderboard-row">
+                  <span className="rank">#{i+1}</span>
+                  <span className="mood-badge">{s.mood}</span>
+                  <span className="score">{s.score} pts</span>
+                </div>
+             ))}
+          </div>
+        )}
+        
+        <button className="play-btn finish-btn" onClick={onFinish}>
+          <ArrowLeft size={24} /> Finish
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [selectedMood, setSelectedMood] = useState(null); 
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -167,6 +216,19 @@ function App() {
       setActiveIndex(-1);
     }
     setCurrentTime(0);
+
+    // Only save to leaderboard if not in sync mode and they scored something
+    if (!isSyncMode && score >= 0) {
+      fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score, mood: selectedMood })
+      }).catch(console.error).finally(() => {
+        setShowLeaderboard(true);
+      });
+    } else {
+      setShowLeaderboard(true);
+    }
   };
 
   const handleBackToMoods = () => {
@@ -182,6 +244,7 @@ function App() {
     setShowSyncResult(false);
     setSyncedLyrics([]);
     setSyncIndex(0);
+    setShowLeaderboard(false);
   };
 
   const toggleSyncMode = () => {
@@ -233,6 +296,16 @@ function App() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (showLeaderboard) {
+    return (
+      <LeaderboardView 
+        onFinish={handleBackToMoods} 
+        currentScore={score} 
+        currentMood={currentSong?.title || selectedMood} 
+      />
     );
   }
 
