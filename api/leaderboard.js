@@ -1,17 +1,15 @@
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 
-// Support both the old Vercel KV and new Upstash Redis environment variables
-const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+const redisUrl = process.env.REDIS_URL;
 
-let redis;
-if (url && token) {
-  redis = new Redis({ url, token });
+let redis = null;
+if (redisUrl) {
+  redis = new Redis(redisUrl);
 }
 
 export default async function handler(req, res) {
   if (!redis) {
-    return res.status(500).json({ error: 'Database environment variables (KV_REST_API_URL or UPSTASH_REDIS_REST_URL) are completely missing in Vercel. Please link the database in Vercel and redeploy!' });
+    return res.status(500).json({ error: 'Database environment variable (REDIS_URL) is completely missing in Vercel. Please add it to your project settings and redeploy!' });
   }
 
   if (req.method === 'POST') {
@@ -23,8 +21,8 @@ export default async function handler(req, res) {
 
       const member = JSON.stringify({ mood, id: Date.now() });
       
-      // ZADD adds to a sorted set, sorted by the score
-      await redis.zadd('leaderboard:global', { score, member });
+      // ioredis ZADD syntax: zadd(key, score, member)
+      await redis.zadd('leaderboard:global', score, member);
 
       return res.status(200).json({ success: true });
     } catch (error) {
@@ -35,24 +33,26 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      // Get top 10 scores (descending)
-      const results = await redis.zrange('leaderboard:global', 0, 9, { rev: true, withScores: true });
+      // ioredis zrange with REV and WITHSCORES returns a flat array:
+      // ["member1", "score1", "member2", "score2"]
+      const results = await redis.zrange('leaderboard:global', 0, 9, 'REV', 'WITHSCORES');
       
       let leaderboard = [];
       
       if (Array.isArray(results)) {
-        for (const item of results) {
-          if (typeof item === 'object' && item !== null && 'member' in item) {
-            // @vercel/kv format: { member: "...", score: 100 }
-            const data = typeof item.member === 'string' ? JSON.parse(item.member) : item.member;
+        for (let i = 0; i < results.length; i += 2) {
+          const memberStr = results[i];
+          const scoreStr = results[i + 1];
+          
+          try {
+            const data = JSON.parse(memberStr);
             leaderboard.push({
-              score: item.score,
+              score: parseInt(scoreStr, 10),
               mood: data.mood,
               date: data.id
             });
-          } else if (typeof item === 'string') {
-            // Older redis format: flat array [member, score, member, score]
-            // We'll skip handling this rare edge case since @vercel/kv formats it to objects.
+          } catch (err) {
+            console.error("Failed to parse member:", memberStr);
           }
         }
       }
