@@ -33,7 +33,7 @@ function App() {
   const audioRef = useRef(null);
   const timerRef = useRef(null);
   
-  const { transcript, startListening, stopListening, resetTranscript, isListening } = useSpeechRecognition();
+  const { transcript, startListening, stopListening, resetTranscript, isListening, speechError } = useSpeechRecognition();
 
   const currentSong = selectedMood ? songsData[selectedMood] : null;
 
@@ -305,7 +305,9 @@ function App() {
                 {!isSyncMode && (
                   <div className={`mic-status ${isListening ? 'active' : ''}`}>
                     {isListening ? <Mic size={20} /> : <MicOff size={20} />}
-                    <span className="mic-text">{isListening ? 'Listening...' : 'Mic Off'}</span>
+                    <span className="mic-text">
+                      {speechError ? `Error: ${speechError}` : (isListening ? 'Listening...' : 'Mic Off')}
+                    </span>
                   </div>
                 )}
               </div>

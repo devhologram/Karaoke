@@ -3,11 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 export function useSpeechRecognition() {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState(null);
   const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      console.warn("Speech recognition is not supported in this browser.");
+      setSpeechError('not-supported');
       return;
     }
     
@@ -27,6 +28,7 @@ export function useSpeechRecognition() {
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error", event.error);
+      setSpeechError(event.error);
       setIsListening(false);
     };
 
@@ -73,5 +75,5 @@ export function useSpeechRecognition() {
     setTranscript('');
   };
 
-  return { transcript, isListening, startListening, stopListening, resetTranscript };
+  return { transcript, isListening, startListening, stopListening, resetTranscript, speechError };
 }
