@@ -6,6 +6,7 @@ export function useSpeechRecognition() {
   const [speechError, setSpeechError] = useState(null);
   const [speechEvent, setSpeechEvent] = useState('Initialized'); // Debug state
   const recognitionRef = useRef(null);
+  const isListeningRef = useRef(false);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -45,7 +46,7 @@ export function useSpeechRecognition() {
     recognition.onend = () => {
       setSpeechEvent('Engine stopped');
       // Auto restart if it stops unexpectedly
-      if (isListening && recognitionRef.current) {
+      if (isListeningRef.current && recognitionRef.current) {
         try {
           setSpeechEvent('Restarting engine...');
           recognitionRef.current.start();
@@ -63,10 +64,11 @@ export function useSpeechRecognition() {
         recognitionRef.current.stop();
       }
     };
-  }, [isListening]);
+  }, []);
 
   const startListening = () => {
     setIsListening(true);
+    isListeningRef.current = true;
     setTranscript('');
     try {
       recognitionRef.current?.start();
@@ -77,6 +79,7 @@ export function useSpeechRecognition() {
 
   const stopListening = () => {
     setIsListening(false);
+    isListeningRef.current = false;
     try {
       recognitionRef.current?.stop();
     } catch(e) {
