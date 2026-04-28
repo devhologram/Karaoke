@@ -14,16 +14,25 @@ const getEligibleWords = (text) => {
 function LeaderboardView({ onFinish, currentScore, currentMood }) {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
 
   useEffect(() => {
     fetch('/api/leaderboard')
-      .then(r => r.json())
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) {
+          throw new Error(data.error || 'Failed to fetch leaderboard');
+        }
+        return data;
+      })
       .then(data => {
-        setScores(data || []);
+        setScores(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(e => {
         console.error(e);
+        setApiError(e.message);
+        setScores([]);
         setLoading(false);
       });
   }, []);
@@ -38,6 +47,11 @@ function LeaderboardView({ onFinish, currentScore, currentMood }) {
         
         {loading ? (
           <p className="loading-text">Loading top scores...</p>
+        ) : apiError ? (
+          <div className="audio-warning" style={{marginBottom: '2rem'}}>
+            <AlertCircle size={20} />
+            <p>Database Error: {apiError}</p>
+          </div>
         ) : (
           <div className="leaderboard-table">
              {scores.length === 0 ? <p>No scores yet. You are the first!</p> : null}
