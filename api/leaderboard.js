@@ -1,4 +1,10 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+// Support both the old Vercel KV and new Upstash Redis environment variables
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
+});
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -11,7 +17,7 @@ export default async function handler(req, res) {
       const member = JSON.stringify({ mood, id: Date.now() });
       
       // ZADD adds to a sorted set, sorted by the score
-      await kv.zadd('leaderboard:global', { score, member });
+      await redis.zadd('leaderboard:global', { score, member });
 
       return res.status(200).json({ success: true });
     } catch (error) {
@@ -23,7 +29,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Get top 10 scores (descending)
-      const results = await kv.zrange('leaderboard:global', 0, 9, { rev: true, withScores: true });
+      const results = await redis.zrange('leaderboard:global', 0, 9, { rev: true, withScores: true });
       
       let leaderboard = [];
       
