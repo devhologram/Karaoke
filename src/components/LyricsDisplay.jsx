@@ -33,11 +33,22 @@ const LyricsDisplay = ({ lyrics, activeIndex, songMissingData, filledLines }) =>
             const originalWord = line.text.substring(wordIndex, wordIndex + missingWord.length);
             const after = line.text.substring(wordIndex + missingWord.length);
             
+            let spanClass = 'waiting';
+            let spanContent = '_'.repeat(missingWord.length);
+
+            if (isWordFilled) {
+              spanClass = 'filled success-anim';
+              spanContent = originalWord;
+            } else if (isPast) {
+              spanClass = 'missed error-anim';
+              spanContent = originalWord;
+            }
+
             content = (
               <>
                 {before}
-                <span className={`lyric-blank ${isWordFilled ? 'filled success-anim' : 'waiting'}`}>
-                  {isWordFilled ? originalWord : '_'.repeat(missingWord.length)}
+                <span className={`lyric-blank ${spanClass}`}>
+                  {spanContent}
                 </span>
                 {after}
               </>

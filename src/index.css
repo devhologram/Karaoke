@@ -160,6 +160,23 @@ body {
   text-shadow: 0 0 15px var(--success);
 }
 
+.lyric-blank.missed {
+  color: #ff3333;
+  border-bottom-color: transparent;
+}
+
+.lyric-blank.missed.error-anim {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  text-shadow: 0 0 15px rgba(255, 51, 51, 0.6);
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
 @keyframes pulse-blank {
   0% { opacity: 0.5; }
   50% { opacity: 1; text-shadow: 0 0 10px var(--secondary); }
