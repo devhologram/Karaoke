@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 
 export function useCameraRecorder() {
   const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -30,21 +31,7 @@ export function useCameraRecorder() {
       mediaRecorder.onstop = () => {
         const type = options ? 'video/webm' : 'video/mp4';
         const blob = new Blob(chunksRef.current, { type });
-        const url = URL.createObjectURL(blob);
-        
-        // Auto download locally
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        const extension = options ? 'webm' : 'mp4';
-        a.download = `karaoke-recording-${Date.now()}.${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-        }, 100);
+        setRecordedBlob(blob);
 
         // Stop all camera tracks so the light turns off
         stream.getTracks().forEach(track => track.stop());
@@ -67,5 +54,7 @@ export function useCameraRecorder() {
     }
   };
 
-  return { startCameraRecording, isRecording };
+  const clearRecordedBlob = () => setRecordedBlob(null);
+
+  return { startCameraRecording, isRecording, recordedBlob, clearRecordedBlob };
 }

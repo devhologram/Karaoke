@@ -5,6 +5,7 @@ import LyricsDisplay from './components/LyricsDisplay';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { useCameraRecorder } from './hooks/useCameraRecorder';
 import { songsData } from './data/lyrics';
+import { QRCodeSVG } from 'qrcode.react';
 import './index.css';
 
 const getEligibleWords = (text) => {
@@ -12,7 +13,7 @@ const getEligibleWords = (text) => {
   return matches ? Array.from(new Set(matches)) : [];
 };
 
-function LeaderboardView({ onFinish, currentScore, currentMood }) {
+function LeaderboardView({ onFinish, currentScore, currentMood, videoUrl }) {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
@@ -65,6 +66,18 @@ function LeaderboardView({ onFinish, currentScore, currentMood }) {
              ))}
           </div>
         )}
+
+        {videoUrl && (
+          <div className="video-qr-section" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', marginBottom: '1rem' }}>Scan to view your performance!</h3>
+            <div className="qr-container" style={{ background: '#fff', padding: '1rem', borderRadius: '12px', display: 'inline-block' }}>
+              <QRCodeSVG value={videoUrl} size={150} fgColor="#1f2833" bgColor="#ffffff" />
+            </div>
+            <div style={{ marginTop: '0.5rem' }}>
+              <a href={videoUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold' }}>Or click here to download</a>
+            </div>
+          </div>
+        )}
         
         <button className="play-btn finish-btn" onClick={onFinish}>
           <ArrowLeft size={24} /> Finish
@@ -77,6 +90,8 @@ function LeaderboardView({ onFinish, currentScore, currentMood }) {
 function App() {
   const [selectedMood, setSelectedMood] = useState(null); 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -98,7 +113,7 @@ function App() {
   const timerRef = useRef(null);
   
   const { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent } = useSpeechRecognition();
-  const { startCameraRecording, isRecording: isCameraRecording } = useCameraRecorder();
+  const { startCameraRecording, isRecording: isCameraRecording, recordedBlob, clearRecordedBlob } = useCameraRecorder();
 
   const currentSong = selectedMood ? songsData[selectedMood] : null;
 
@@ -236,13 +251,32 @@ function App() {
     }
   };
 
-  const handleEnded = () => {
+  const handleEnded = async () => {
     setIsPlaying(false);
     stopListening();
     if (!isSyncMode) {
       setActiveIndex(-1);
     }
     setCurrentTime(0);
+
+    if (recordedBlob) {
+      setIsUploading(true);
+      try {
+        const extension = recordedBlob.type === 'video/mp4' ? 'mp4' : 'webm';
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'x-file-name': `karaoke-${Date.now()}.${extension}`
+          },
+          body: recordedBlob
+        });
+        const data = await response.json();
+        setVideoUrl(data.url);
+      } catch (err) {
+        console.error("Failed to upload video:", err);
+      }
+      setIsUploading(false);
+    }
 
     // Only save to leaderboard if not in sync mode and they scored something
     if (!isSyncMode && score >= 0) {
@@ -272,6 +306,8 @@ function App() {
     setSyncedLyrics([]);
     setSyncIndex(0);
     setShowLeaderboard(false);
+    setVideoUrl(null);
+    clearRecordedBlob();
   };
 
   const toggleSyncMode = () => {
@@ -332,7 +368,19 @@ function App() {
         onFinish={handleBackToMoods} 
         currentScore={score} 
         currentMood={currentSong?.title || selectedMood} 
+        videoUrl={videoUrl}
       />
+    );
+  }
+
+  if (isUploading) {
+    return (
+      <div className="app-container center-content">
+        <div className="glass-panel" style={{textAlign: 'center'}}>
+          <h2 className="mood-title" style={{marginBottom: '1rem'}}>Uploading Performance...</h2>
+          <p className="loading-text" style={{animation: 'pulse-blank 1.5s infinite'}}>Saving your 10 second clip to the cloud!</p>
+        </div>
+      </div>
     );
   }
 
