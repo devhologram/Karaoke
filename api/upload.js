@@ -1,31 +1,27 @@
 import { put } from '@vercel/blob';
 
 export const config = {
-  runtime: 'edge',
+  api: {
+    bodyParser: false,
+  },
 };
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    const filename = request.headers.get('x-file-name') || `karaoke-${Date.now()}.webm`;
+    const filename = req.headers['x-file-name'] || `karaoke-${Date.now()}.webm`;
     
-    // We expect the frontend to send the raw video blob as the request body
-    const blob = await put(filename, request.body, {
+    // Pass the raw HTTP request stream directly to Vercel Blob
+    const blob = await put(filename, req, {
       access: 'public',
     });
 
-    return new Response(JSON.stringify(blob), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json(blob);
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(500).json({ error: error.message });
   }
 }
