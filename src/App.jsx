@@ -41,47 +41,56 @@ function LeaderboardView({ onFinish, currentScore, currentMood, videoUrl }) {
 
   return (
     <div className="app-container center-content">
-      <div className="glass-panel leaderboard-panel">
-        <h2 className="mood-title" style={{marginBottom: '1rem'}}>Global Leaderboard</h2>
-        <div className="current-run">
-          <p>You scored <strong style={{color: 'var(--success)'}}>{currentScore}</strong> on <em>{currentMood}</em>!</p>
-        </div>
+      <div className="leaderboard-layout">
         
-        {loading ? (
-          <p className="loading-text">Loading top scores...</p>
-        ) : apiError ? (
-          <div className="audio-warning" style={{marginBottom: '2rem'}}>
-            <AlertCircle size={20} />
-            <p>Database Error: {apiError}</p>
+        {/* Left Side: Leaderboard */}
+        <div className="glass-panel leaderboard-panel">
+          <h2 className="mood-title" style={{marginBottom: '1rem'}}>Global Leaderboard</h2>
+          <div className="current-run">
+            <p>You scored <strong style={{color: 'var(--success)'}}>{currentScore}</strong> on <em>{currentMood}</em>!</p>
           </div>
-        ) : (
-          <div className="leaderboard-table">
-             {scores.length === 0 ? <p>No scores yet. You are the first!</p> : null}
-             {scores.map((s, i) => (
-                <div key={i} className="leaderboard-row">
-                  <span className="rank">#{i+1}</span>
-                  <span className="mood-badge">{s.mood}</span>
-                  <span className="score">{s.score} pts</span>
-                </div>
-             ))}
+          
+          {loading ? (
+            <p className="loading-text">Loading top scores...</p>
+          ) : apiError ? (
+            <div className="audio-warning" style={{marginBottom: '2rem'}}>
+              <AlertCircle size={20} />
+              <p>Database Error: {apiError}</p>
+            </div>
+          ) : (
+            <div className="leaderboard-table">
+               {scores.length === 0 ? <p>No scores yet. You are the first!</p> : null}
+               {scores.map((s, i) => (
+                  <div key={i} className="leaderboard-row">
+                    <span className="rank">#{i+1}</span>
+                    <span className="mood-badge">{s.mood}</span>
+                    <span className="score">{s.score} pts</span>
+                  </div>
+               ))}
+            </div>
+          )}
+          
+          <button className="play-btn finish-btn" onClick={onFinish}>
+            <ArrowLeft size={24} /> Finish
+          </button>
+        </div>
+
+        {/* Right Side: QR Code */}
+        {videoUrl && (
+          <div className="glass-panel qr-panel" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <h2 className="mood-title" style={{marginBottom: '1.5rem'}}>Get Your Video!</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Scan this code to download your 10-second performance.</p>
+            <div className="qr-container" style={{ background: '#fff', padding: '1.5rem', borderRadius: '16px', display: 'inline-block', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+              <QRCodeSVG value={videoUrl} size={200} fgColor="#1f2833" bgColor="#ffffff" />
+            </div>
+            <div style={{ marginTop: '2rem' }}>
+              <a href={videoUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.2rem', padding: '0.75rem 1.5rem', background: 'rgba(138, 43, 226, 0.1)', border: '1px solid var(--primary)', borderRadius: '2rem', transition: 'all 0.3s' }}>
+                Open link in browser
+              </a>
+            </div>
           </div>
         )}
 
-        {videoUrl && (
-          <div className="video-qr-section" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', marginBottom: '1rem' }}>Scan to view your performance!</h3>
-            <div className="qr-container" style={{ background: '#fff', padding: '1rem', borderRadius: '12px', display: 'inline-block' }}>
-              <QRCodeSVG value={videoUrl} size={150} fgColor="#1f2833" bgColor="#ffffff" />
-            </div>
-            <div style={{ marginTop: '0.5rem' }}>
-              <a href={videoUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold' }}>Or click here to download</a>
-            </div>
-          </div>
-        )}
-        
-        <button className="play-btn finish-btn" onClick={onFinish}>
-          <ArrowLeft size={24} /> Finish
-        </button>
       </div>
     </div>
   );

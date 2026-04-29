@@ -485,11 +485,35 @@ body {
 .copy-btn:hover {
   background: rgba(255,255,255,0.2);
 }
+.leaderboard-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 1000px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .leaderboard-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 .leaderboard-panel {
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   align-items: center;
   padding: 3rem;
+  flex: 1;
+}
+
+.qr-panel {
+  max-width: 400px;
+  width: 100%;
+  padding: 3rem;
+  flex: 1;
 }
 
 .current-run {
