@@ -3,6 +3,7 @@ import { Mic, MicOff, Play, Pause, Music, AlertCircle, Smile, Frown, Zap, Coffee
 import AudioPlayer from './components/AudioPlayer';
 import LyricsDisplay from './components/LyricsDisplay';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
+import { useCameraRecorder } from './hooks/useCameraRecorder';
 import { songsData } from './data/lyrics';
 import './index.css';
 
@@ -97,6 +98,7 @@ function App() {
   const timerRef = useRef(null);
   
   const { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent } = useSpeechRecognition();
+  const { startCameraRecording, isRecording: isCameraRecording } = useCameraRecorder();
 
   const currentSong = selectedMood ? songsData[selectedMood] : null;
 
@@ -213,14 +215,25 @@ function App() {
   };
 
   const togglePlay = () => {
-    if (isPlaying) {
-      if (!audioError) audioRef.current?.pause();
-      if (!isSyncMode) stopListening();
-    } else {
-      if (!audioError) audioRef.current?.play().catch(() => setAudioError(true));
-      if (!isSyncMode) startListening();
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        stopListening();
+      } else {
+        audioRef.current.play().catch(e => {
+          console.log("Audio play failed, using mock timer", e);
+          setAudioError(true);
+        });
+        startListening();
+        
+        // Start the 10-second camera recording at the beginning of the song
+        // (Only if it's currently at the beginning)
+        if (currentTime < 1) {
+          startCameraRecording();
+        }
+      }
+      setIsPlaying(!isPlaying);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleEnded = () => {
