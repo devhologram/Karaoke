@@ -27,8 +27,8 @@ export function useSpeechRecognition() {
 
     // Diagnostic Events
     recognition.onaudiostart = () => setSpeechEvent('Listening...');
-    recognition.onsoundstart = () => setSpeechEvent('Listening...');
-    recognition.onspeechstart = () => setSpeechEvent('Listening...');
+    recognition.onsoundstart = () => setSpeechEvent('Hearing Sound...');
+    recognition.onspeechstart = () => setSpeechEvent('Processing Speech...');
     recognition.onnomatch = () => setSpeechEvent('Listening...');
 
     recognition.onresult = (event) => {
@@ -73,6 +73,7 @@ export function useSpeechRecognition() {
     };
 
     recognition.onerror = (event) => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       console.error("Speech recognition error", event.error);
       if (event.error === 'no-speech') {
         // Pauses are normal in karaoke, ignore and let it restart
@@ -91,6 +92,7 @@ export function useSpeechRecognition() {
     };
 
     recognition.onend = () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       // Auto restart if it stops unexpectedly
       if (isListeningRef.current && recognitionRef.current) {
         setSpeechEvent('Listening...');
