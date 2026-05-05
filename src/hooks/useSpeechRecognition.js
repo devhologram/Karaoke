@@ -61,15 +61,6 @@ export function useSpeechRecognition() {
       
       setTranscript(finalClean);
       setSpeechEvent(`Heard: ${finalClean.substring(0, 20)}...`);
-
-      // Automatically clear the heard text after 1 second of silence so they can try again
-      silenceTimerRef.current = setTimeout(() => {
-        if (isListeningRef.current) {
-          baselineRef.current = fullRawTranscriptRef.current;
-          setTranscript('');
-          setSpeechEvent('Listening...');
-        }
-      }, 1000);
     };
 
     recognition.onerror = (event) => {

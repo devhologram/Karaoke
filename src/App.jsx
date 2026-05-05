@@ -194,16 +194,29 @@ function App() {
   useEffect(() => {
     if (isSyncMode) return;
     
-    const currentMissingWord = songMissingData[activeIndex];
-    const isCurrentlyFilled = filledLines[activeIndex];
+    const checkWord = (index) => {
+      if (index < 0) return false;
+      const missingWord = songMissingData[index];
+      const isFilled = filledLines[index];
 
-    if (currentMissingWord && !isCurrentlyFilled && isPlaying) {
-      const lowerTranscript = transcript.toLowerCase();
-      if (lowerTranscript.includes(currentMissingWord)) {
-        setFilledLines(prev => ({ ...prev, [activeIndex]: true }));
-        setScore(s => s + 100);
-        resetTranscript();
+      if (missingWord && !isFilled && isPlaying) {
+        const lowerTranscript = transcript.toLowerCase();
+        if (lowerTranscript.includes(missingWord)) {
+          setFilledLines(prev => ({ ...prev, [index]: true }));
+          setScore(s => s + 100);
+          resetTranscript();
+          return true;
+        }
       }
+      return false;
+    };
+
+    // Because of cloud network latency, transcripts often arrive *after* the song 
+    // has already moved to the next line. We give a 1-line grace period!
+    // Check the previous line first (chronological order)
+    let filled = checkWord(activeIndex - 1);
+    if (!filled) {
+      checkWord(activeIndex);
     }
   }, [transcript, activeIndex, isPlaying, isSyncMode, songMissingData, filledLines]);
 
