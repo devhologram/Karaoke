@@ -7,8 +7,8 @@ export function useSpeechRecognition() {
   const [speechEvent, setSpeechEvent] = useState('Initialized'); // Debug state
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
-  const offsetIndexRef = useRef(0);
-  const resultsLengthRef = useRef(0);
+  const baselineRef = useRef('');
+  const fullRawTranscriptRef = useRef('');
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -30,17 +30,27 @@ export function useSpeechRecognition() {
     recognition.onnomatch = () => setSpeechEvent('No match found');
 
     recognition.onresult = (event) => {
-      resultsLengthRef.current = event.results.length;
-      let currentTranscript = '';
-      
-      const startIdx = Math.min(offsetIndexRef.current, event.results.length);
-      for (let i = startIdx; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript + ' ';
+      let rawTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        rawTranscript += event.results[i][0].transcript + ' ';
       }
       
-      const cleanTranscript = currentTranscript.trim().toLowerCase();
-      setTranscript(cleanTranscript);
-      setSpeechEvent(`Heard: ${cleanTranscript.substring(0, 20)}...`);
+      fullRawTranscriptRef.current = rawTranscript;
+      
+      let cleanTranscript = rawTranscript.toLowerCase();
+      let cleanBaseline = baselineRef.current.toLowerCase();
+      
+      let activeTranscript = '';
+      if (cleanTranscript.startsWith(cleanBaseline)) {
+        activeTranscript = cleanTranscript.substring(cleanBaseline.length);
+      } else {
+        // Fallback if interim result changed a previous word slightly
+        activeTranscript = cleanTranscript.substring(Math.min(cleanTranscript.length, cleanBaseline.length));
+      }
+      
+      const finalClean = activeTranscript.trim();
+      setTranscript(finalClean);
+      setSpeechEvent(`Heard: ${finalClean.substring(0, 20)}...`);
     };
 
     recognition.onerror = (event) => {
@@ -87,8 +97,8 @@ export function useSpeechRecognition() {
   const startListening = () => {
     setIsListening(true);
     isListeningRef.current = true;
-    offsetIndexRef.current = 0;
-    resultsLengthRef.current = 0;
+    baselineRef.current = '';
+    fullRawTranscriptRef.current = '';
     setTranscript('');
     try {
       recognitionRef.current?.start();
@@ -108,7 +118,7 @@ export function useSpeechRecognition() {
   };
 
   const resetTranscript = () => {
-    offsetIndexRef.current = resultsLengthRef.current;
+    baselineRef.current = fullRawTranscriptRef.current;
     setTranscript('');
   };
 
