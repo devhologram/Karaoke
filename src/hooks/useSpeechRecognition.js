@@ -27,9 +27,6 @@ export function useSpeechRecognition() {
 
     // Diagnostic Events
     recognition.onaudiostart = () => setSpeechEvent('Listening...');
-    recognition.onsoundstart = () => setSpeechEvent('Hearing Sound...');
-    recognition.onspeechstart = () => setSpeechEvent('Processing Speech...');
-    recognition.onnomatch = () => setSpeechEvent('Listening...');
 
     recognition.onresult = (event) => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
