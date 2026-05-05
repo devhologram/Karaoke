@@ -50,6 +50,11 @@ export function useSpeechRecognition() {
         setSpeechEvent('Silence detected, waiting...');
         return;
       }
+      if (event.error === 'network') {
+        // Common glitch in Chrome Speech API, let it restart
+        setSpeechEvent('Reconnecting...');
+        return;
+      }
       setSpeechError(event.error);
       setSpeechEvent(`Error: ${event.error}`);
       setIsListening(false);
