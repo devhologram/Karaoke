@@ -140,7 +140,7 @@ body {
   display: inline-block;
   min-width: 80px;
   border-bottom: 4px solid var(--text-secondary);
-  color: transparent;
+  color: rgba(255, 255, 255, 0.5);
   margin: 0 0.5rem;
   transition: all 0.3s;
 }
