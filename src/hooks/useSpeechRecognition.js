@@ -45,9 +45,15 @@ export function useSpeechRecognition() {
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error", event.error);
+      if (event.error === 'no-speech') {
+        // Pauses are normal in karaoke, ignore and let it restart
+        setSpeechEvent('Silence detected, waiting...');
+        return;
+      }
       setSpeechError(event.error);
       setSpeechEvent(`Error: ${event.error}`);
       setIsListening(false);
+      isListeningRef.current = false;
     };
 
     recognition.onend = () => {
