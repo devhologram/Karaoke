@@ -90,7 +90,7 @@ export function useSpeechRecognition() {
             console.error("Failed to restart", e);
             setSpeechEvent(`Restart failed: ${e.message}`);
           }
-        }, 250);
+        }, 50);
       }
     };
 
