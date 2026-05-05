@@ -96,8 +96,8 @@ function LeaderboardView({ onFinish, currentScore, currentMood, videoUrl }) {
   );
 }
 
-function MicTestView({ onBack }) {
-  const { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent } = useSpeechRecognition();
+function MicTestView({ onBack, speechHelpers }) {
+  const { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent } = speechHelpers;
 
   return (
     <div className="app-container center-content">
@@ -138,7 +138,7 @@ function MicTestView({ onBack }) {
           </p>
         </div>
 
-        <button className="back-btn" onClick={onBack} style={{ marginTop: '2rem' }}>
+        <button className="back-btn" onClick={() => { stopListening(); onBack(); }} style={{ marginTop: '2rem' }}>
           <ArrowLeft size={20} /> Back to Menu
         </button>
       </div>
@@ -406,8 +406,10 @@ function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const speechHelpers = { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent };
+
   if (showMicTest) {
-    return <MicTestView onBack={handleBackToMoods} />;
+    return <MicTestView onBack={handleBackToMoods} speechHelpers={speechHelpers} />;
   }
 
   if (!selectedMood) {
