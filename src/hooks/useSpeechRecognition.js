@@ -24,6 +24,7 @@ export function useSpeechRecognition() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1; // Forces faster processing by not evaluating multiple hypotheses
 
     // Diagnostic Events
     recognition.onaudiostart = () => setSpeechEvent('Listening...');
