@@ -413,11 +413,13 @@ function App() {
   if (!selectedMood) {
     return (
       <div className="app-container center-content">
-        <div className="logo large">
-          <Music className="icon" size={48} />
-          <h1>VocalStar</h1>
+        <div className="logo large" style={{ flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Music className="icon" size={48} />
+            <h1>Hologram Indonesia Karaoke</h1>
+          </div>
         </div>
-        <h2 className="mood-title">How are you feeling today?</h2>
+        <h2 className="mood-title" style={{ marginTop: '1rem' }}>How are you feeling today?</h2>
         <div className="mood-grid">
           <button className="mood-card happy" onClick={() => setSelectedMood('happy')}>
             <Smile size={48} />
@@ -484,7 +486,7 @@ function App() {
         </div>
         <div className="logo">
           <Music className="icon" />
-          <h1>VocalStar</h1>
+          <h1>Hologram Indonesia Karaoke</h1>
         </div>
         <div className="score-display">
           Score: <span>{score}</span>
