@@ -76,13 +76,18 @@ export function useSpeechRecognition() {
       setSpeechEvent('Engine stopped');
       // Auto restart if it stops unexpectedly
       if (isListeningRef.current && recognitionRef.current) {
-        try {
-          setSpeechEvent('Restarting engine...');
-          recognitionRef.current.start();
-        } catch (e) {
-          console.error("Failed to restart", e);
-          setSpeechEvent(`Restart failed: ${e.message}`);
-        }
+        setSpeechEvent('Restarting engine...');
+        setTimeout(() => {
+          try {
+            // Check again in case it was stopped during the timeout
+            if (isListeningRef.current && recognitionRef.current) {
+              recognitionRef.current.start();
+            }
+          } catch (e) {
+            console.error("Failed to restart", e);
+            setSpeechEvent(`Restart failed: ${e.message}`);
+          }
+        }, 250);
       }
     };
 
