@@ -10,6 +10,8 @@ export function useSpeechRecognition() {
   const baselineRef = useRef('');
   const fullRawTranscriptRef = useRef('');
 
+  const silenceTimerRef = useRef(null);
+
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setSpeechError('not-supported');
@@ -25,12 +27,14 @@ export function useSpeechRecognition() {
     recognition.maxAlternatives = 1; // Force fastest single-result processing
 
     // Diagnostic Events
-    recognition.onaudiostart = () => setSpeechEvent('Audio capturing started');
-    recognition.onsoundstart = () => setSpeechEvent('Sound detected');
-    recognition.onspeechstart = () => setSpeechEvent('Speech detected');
-    recognition.onnomatch = () => setSpeechEvent('No match found');
+    recognition.onaudiostart = () => setSpeechEvent('Listening...');
+    recognition.onsoundstart = () => setSpeechEvent('Listening...');
+    recognition.onspeechstart = () => setSpeechEvent('Listening...');
+    recognition.onnomatch = () => setSpeechEvent('Listening...');
 
     recognition.onresult = (event) => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
       let rawTranscript = '';
       for (let i = 0; i < event.results.length; i++) {
         rawTranscript += event.results[i][0].transcript + ' ';
@@ -52,18 +56,27 @@ export function useSpeechRecognition() {
       const finalClean = activeTranscript.trim();
       setTranscript(finalClean);
       setSpeechEvent(`Heard: ${finalClean.substring(0, 20)}...`);
+
+      // Automatically clear the heard text after 1 second of silence so they can try again
+      silenceTimerRef.current = setTimeout(() => {
+        if (isListeningRef.current) {
+          baselineRef.current = fullRawTranscriptRef.current;
+          setTranscript('');
+          setSpeechEvent('Listening...');
+        }
+      }, 1000);
     };
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error", event.error);
       if (event.error === 'no-speech') {
         // Pauses are normal in karaoke, ignore and let it restart
-        setSpeechEvent('Silence detected, waiting...');
+        setSpeechEvent('Listening...');
         return;
       }
       if (event.error === 'network') {
         // Common glitch in Chrome Speech API, let it restart
-        setSpeechEvent('Reconnecting...');
+        setSpeechEvent('Listening...');
         return;
       }
       setSpeechError(event.error);
@@ -73,10 +86,9 @@ export function useSpeechRecognition() {
     };
 
     recognition.onend = () => {
-      setSpeechEvent('Engine stopped');
       // Auto restart if it stops unexpectedly
       if (isListeningRef.current && recognitionRef.current) {
-        setSpeechEvent('Restarting engine...');
+        setSpeechEvent('Listening...');
         setTimeout(() => {
           try {
             // Check again in case it was stopped during the timeout
@@ -84,13 +96,15 @@ export function useSpeechRecognition() {
               // A new session means event.results is wiped clean, so we must wipe our tracking baseline too!
               baselineRef.current = '';
               fullRawTranscriptRef.current = '';
+              setTranscript('');
               recognitionRef.current.start();
             }
           } catch (e) {
             console.error("Failed to restart", e);
-            setSpeechEvent(`Restart failed: ${e.message}`);
           }
         }, 50);
+      } else {
+        setSpeechEvent('Mic Off');
       }
     };
 
