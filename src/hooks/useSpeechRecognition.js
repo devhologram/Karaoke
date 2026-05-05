@@ -44,15 +44,21 @@ export function useSpeechRecognition() {
       let cleanTranscript = rawTranscript.toLowerCase();
       let cleanBaseline = baselineRef.current.toLowerCase();
       
-      let activeTranscript = '';
-      if (cleanTranscript.startsWith(cleanBaseline)) {
-        activeTranscript = cleanTranscript.substring(cleanBaseline.length);
-      } else {
-        // Fallback if interim result changed a previous word slightly
-        activeTranscript = cleanTranscript.substring(Math.min(cleanTranscript.length, cleanBaseline.length));
+      let rawWords = cleanTranscript.trim() ? cleanTranscript.trim().split(/\s+/) : [];
+      let baselineWords = cleanBaseline.trim() ? cleanBaseline.trim().split(/\s+/) : [];
+      
+      let commonPrefixCount = 0;
+      for (let i = 0; i < Math.min(rawWords.length, baselineWords.length); i++) {
+        if (rawWords[i] === baselineWords[i]) {
+          commonPrefixCount++;
+        } else {
+          break;
+        }
       }
       
-      const finalClean = activeTranscript.trim();
+      let activeWords = rawWords.slice(commonPrefixCount);
+      let finalClean = activeWords.join(' ');
+      
       setTranscript(finalClean);
       setSpeechEvent(`Heard: ${finalClean.substring(0, 20)}...`);
 
