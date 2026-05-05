@@ -22,6 +22,7 @@ export function useSpeechRecognition() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1; // Force fastest single-result processing
 
     // Diagnostic Events
     recognition.onaudiostart = () => setSpeechEvent('Audio capturing started');
