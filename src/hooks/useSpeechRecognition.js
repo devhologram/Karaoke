@@ -81,6 +81,9 @@ export function useSpeechRecognition() {
           try {
             // Check again in case it was stopped during the timeout
             if (isListeningRef.current && recognitionRef.current) {
+              // A new session means event.results is wiped clean, so we must wipe our tracking baseline too!
+              baselineRef.current = '';
+              fullRawTranscriptRef.current = '';
               recognitionRef.current.start();
             }
           } catch (e) {
