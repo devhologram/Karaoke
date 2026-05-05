@@ -96,9 +96,60 @@ function LeaderboardView({ onFinish, currentScore, currentMood, videoUrl }) {
   );
 }
 
+function MicTestView({ onBack }) {
+  const { transcript, startListening, stopListening, resetTranscript, isListening, speechError, speechEvent } = useSpeechRecognition();
+
+  return (
+    <div className="app-container center-content">
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', textAlign: 'center' }}>
+        <h2 className="mood-title" style={{marginBottom: '1rem'}}>Mic Diagnostic Test</h2>
+        <p style={{color: 'var(--text-secondary)', marginBottom: '2rem'}}>
+          This screen isolates the Web Speech API. Sing or speak normally to test exactly how fast the cloud transcribes your voice.
+        </p>
+
+        <div className="controls" style={{ justifyContent: 'center', marginBottom: '2rem' }}>
+          <button 
+            className={`play-btn ${isListening ? 'playing' : ''}`} 
+            onClick={isListening ? stopListening : startListening}
+            style={{ width: 'auto', padding: '1rem 2rem', borderRadius: '2rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+          >
+            {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+            {isListening ? 'Stop Mic' : 'Start Mic'}
+          </button>
+          
+          <button 
+            className="play-btn" 
+            onClick={resetTranscript}
+            style={{ width: 'auto', padding: '1rem 2rem', borderRadius: '2rem', background: 'var(--bg-glass)' }}
+          >
+            Clear Text
+          </button>
+        </div>
+
+        <div className={`mic-status ${isListening ? 'active' : ''}`} style={{ justifyContent: 'center', marginBottom: '1rem' }}>
+          <span className="mic-text" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+            Status: {speechError ? `Error: ${speechError}` : (isListening ? speechEvent : 'Mic Off')}
+          </span>
+        </div>
+
+        <div className="transcript-box" style={{ minHeight: '150px', background: 'rgba(0,0,0,0.2)', padding: '2rem', borderRadius: '12px' }}>
+          <p className="transcript-text" style={{ fontSize: '1.5rem', lineHeight: '1.5' }}>
+            {transcript ? `"${transcript}"` : (isListening ? "Waiting for voice..." : "Press Start Mic to begin")}
+          </p>
+        </div>
+
+        <button className="back-btn" onClick={onBack} style={{ marginTop: '2rem' }}>
+          <ArrowLeft size={20} /> Back to Menu
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [selectedMood, setSelectedMood] = useState(null); 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showMicTest, setShowMicTest] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
   
@@ -317,6 +368,7 @@ function App() {
   const handleBackToMoods = () => {
     if (isPlaying) togglePlay();
     setSelectedMood(null);
+    setShowMicTest(false);
     setScore(0);
     setActiveIndex(-1);
     setCurrentTime(0);
@@ -354,6 +406,10 @@ function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  if (showMicTest) {
+    return <MicTestView onBack={handleBackToMoods} />;
+  }
+
   if (!selectedMood) {
     return (
       <div className="app-container center-content">
@@ -378,6 +434,15 @@ function App() {
           <button className="mood-card chill" onClick={() => setSelectedMood('chill')}>
             <Coffee size={48} />
             <span>Chill</span>
+          </button>
+        </div>
+        <div style={{ marginTop: '3rem' }}>
+          <button 
+            className="play-btn" 
+            onClick={() => setShowMicTest(true)}
+            style={{ width: 'auto', padding: '1rem 3rem', borderRadius: '2rem', background: 'var(--bg-glass)', border: '1px solid var(--border)', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Mic size={24} /> Test Mic
           </button>
         </div>
       </div>
